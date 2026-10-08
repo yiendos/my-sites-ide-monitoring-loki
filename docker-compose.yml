@@ -1,0 +1,30 @@
+services:
+    loki:
+        image: ${NAMESPACE}_loki:latest
+        build:
+            context: .
+            dockerfile: Dockerfile
+        # ${...} in the config is filled from the environment (-config.expand-env)
+        command: ["-config.file=/etc/loki/loki.yaml", "-config.expand-env=true"]
+        environment:
+            LOKI_RETENTION: ${LOKI_RETENTION:-2d}
+        volumes:
+            # read-only config ships with the package; chunks, index and the compactor's working
+            # files go in storage/plugins/loki/ ("storage": true in composer.json mounts it at /storage)
+            - ./conf/loki.yaml:/etc/loki/loki.yaml:ro
+        # no host port - Grafana and Alloy reach it as loki:3100 inside the IDE
+        labels:
+            # scraped by the prometheus plugin, when it's installed
+            prometheus.io/scrape: "true"
+            prometheus.io/port: "3100"
+        # Docker's own copy of the container's output, capped (json-file only rotates by size) - the
+        # searchable history is in Loki, for its retention
+        logging:
+            driver: json-file
+            options:
+                max-size: "10m"
+                max-file: "3"
+        networks:
+            - my-sites-ide
+
+    # opt-in: run monitoring:loki-start, or add loki to APP
