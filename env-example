@@ -1,0 +1,5 @@
+# [loki]
+# Defaults live in this plugin's .env. LOKI_RETENTION is how long logs are kept (e.g. 2d, 12h).
+# Loki has no host port - Grafana and Alloy reach it as loki:3100 inside the IDE.
+# Run `php my-sites-ide monitoring:loki-start` after changing it.
+#LOKI_RETENTION=2d

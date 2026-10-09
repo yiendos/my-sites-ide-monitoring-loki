@@ -1,0 +1,54 @@
+# Loki in single-binary mode for one developer: everything in one process, on the filesystem
+# in /storage (storage/plugins/loki/), no auth.
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+  log_level: warn
+
+common:
+  instance_addr: 127.0.0.1
+  path_prefix: /storage
+  storage:
+    filesystem:
+      chunks_directory: /storage/chunks
+      rules_directory: /storage/rules
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+schema_config:
+  configs:
+    - from: 2026-01-01
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+limits_config:
+  retention_period: ${LOKI_RETENTION:-2d}
+  # OTLP logs keep their trace_id here, for Grafana's log-to-trace links
+  allow_structured_metadata: true
+  volume_enabled: true
+
+compactor:
+  working_directory: /storage/compactor
+  retention_enabled: true
+  delete_request_store: filesystem
+
+# powers Grafana's Logs Drilldown patterns
+pattern_ingester:
+  enabled: true
+
+ruler:
+  storage:
+    type: local
+    local:
+      directory: /storage/rules
+
+analytics:
+  reporting_enabled: false
